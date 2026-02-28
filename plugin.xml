@@ -1,0 +1,91 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="cordova-plugin-firebasex-core"
+        version="1.0.0"
+        xmlns="http://apache.org/cordova/ns/plugins/1.0"
+        xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <name>Firebasex Core</name>
+    <description>Core Firebase plugin for Cordova - handles Firebase initialization, installations, and shared utilities</description>
+    <license>MIT</license>
+    <keywords>cordova,firebase,firebasex,core</keywords>
+
+    <engines>
+        <engine name="cordova" version=">=12.0.0"/>
+        <engine name="cordova-android" version=">=14.0.0"/>
+        <engine name="cordova-ios" version=">=7.0.0"/>
+    </engines>
+
+    <js-module name="FirebasexCorePlugin" src="www/firebasex-core.js">
+        <clobbers target="FirebasexCore"/>
+    </js-module>
+
+    <!-- Android -->
+    <platform name="android">
+        <preference name="ANDROID_FIREBASE_CORE_VERSION" default="21.1.1"/>
+        <preference name="ANDROID_FIREBASE_INSTALLATIONS_VERSION" default="18.0.0"/>
+        <preference name="ANDROID_GSON_VERSION" default="2.10.1"/>
+
+        <config-file parent="/*" target="res/xml/config.xml">
+            <feature name="FirebasexCorePlugin">
+                <param name="android-package" value="org.apache.cordova.firebasex.FirebasexCorePlugin"/>
+                <param name="onload" value="true"/>
+            </feature>
+        </config-file>
+
+        <config-file target="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.INTERNET"/>
+            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+        </config-file>
+
+        <framework src="com.google.firebase:firebase-core:$ANDROID_FIREBASE_CORE_VERSION" />
+        <framework src="com.google.firebase:firebase-installations:$ANDROID_FIREBASE_INSTALLATIONS_VERSION" />
+        <framework src="com.google.code.gson:gson:$ANDROID_GSON_VERSION" />
+
+        <source-file src="src/android/FirebasexCorePlugin.java" target-dir="src/org/apache/cordova/firebasex"/>
+        <source-file src="src/android/FirebasexEventBus.java" target-dir="src/org/apache/cordova/firebasex"/>
+        <source-file src="src/android/FirebasexSharedState.java" target-dir="src/org/apache/cordova/firebasex"/>
+        <source-file src="src/android/FirebasePluginMessageReceiver.java" target-dir="src/org/apache/cordova/firebasex"/>
+        <source-file src="src/android/FirebasePluginMessageReceiverManager.java" target-dir="src/org/apache/cordova/firebasex"/>
+    </platform>
+
+    <!-- iOS -->
+    <platform name="ios">
+        <preference name="IOS_FIREBASE_SDK_VERSION" default="12.9.0"/>
+
+        <config-file parent="/*" target="config.xml">
+            <feature name="FirebasexCorePlugin">
+                <param name="ios-package" value="FirebasexCorePlugin"/>
+                <param name="onload" value="true"/>
+            </feature>
+        </config-file>
+
+        <resource-file src="src/ios/GoogleService-Info.plist"/>
+
+        <podspec>
+            <config>
+                <source url="https://cdn.cocoapods.org/"/>
+            </config>
+            <pods use-frameworks="true">
+                <pod name="FirebaseCore" spec="$IOS_FIREBASE_SDK_VERSION"/>
+                <pod name="FirebaseCoreExtension" spec="$IOS_FIREBASE_SDK_VERSION"/>
+                <pod name="FirebaseInstallations" spec="$IOS_FIREBASE_SDK_VERSION"/>
+            </pods>
+        </podspec>
+
+        <header-file src="src/ios/FirebasexCorePlugin.h"/>
+        <source-file src="src/ios/FirebasexCorePlugin.m"/>
+        <header-file src="src/ios/AppDelegate+FirebasexCore.h"/>
+        <source-file src="src/ios/AppDelegate+FirebasexCore.m"/>
+        <header-file src="src/ios/FirebasexCoreWrapper.h"/>
+        <header-file src="src/ios/FirebasePluginMessageReceiver.h"/>
+        <source-file src="src/ios/FirebasePluginMessageReceiver.m"/>
+        <header-file src="src/ios/FirebasePluginMessageReceiverManager.h"/>
+        <source-file src="src/ios/FirebasePluginMessageReceiverManager.m"/>
+
+        <hook src="scripts/ios/before_plugin_install.js" type="before_plugin_install"/>
+        <hook src="scripts/ios/after_plugin_install.js" type="after_plugin_install"/>
+    </platform>
+
+    <hook src="scripts/after_prepare.js" type="after_prepare"/>
+
+</plugin>

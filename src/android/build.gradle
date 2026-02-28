@@ -1,0 +1,14 @@
+ext {
+    firebasexCoreVersions = [
+        'firebase_bom'          : '33.12.0',
+        'google_play_services'  : '21.3.0',
+        'gson'                  : '2.11.0'
+    ]
+}
+
+dependencies {
+    implementation platform("com.google.firebase:firebase-bom:${firebasexCoreVersions.firebase_bom}")
+    implementation "com.google.firebase:firebase-core"
+    implementation "com.google.firebase:firebase-installations"
+    implementation "com.google.code.gson:gson:${firebasexCoreVersions.gson}"
+}
