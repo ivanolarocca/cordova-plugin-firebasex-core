@@ -188,7 +188,7 @@ public class FirebasexCorePlugin extends CordovaPlugin {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
                 try {
-                    FirebaseInstallations.getInstance().getToken(false)
+                    FirebaseInstallations.getInstance().getToken(true)
                         .addOnCompleteListener(new OnCompleteListener<InstallationTokenResult>() {
                             @Override
                             public void onComplete(@NonNull Task<InstallationTokenResult> task) {

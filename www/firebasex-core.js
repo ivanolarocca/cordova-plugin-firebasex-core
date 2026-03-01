@@ -21,8 +21,33 @@ exports.getId = function (success, error) {
 };
 
 // Internal callbacks for native -> JS
-exports._onInstallationIdChangeCallback = function (id) {};
+exports._onInstallationIdChangeCallback = function (id) {
+    if (typeof onInstallationIdChangeCallback === 'function') onInstallationIdChangeCallback(id);
+};
 
-exports._applicationDidBecomeActive = function () {};
+exports._applicationDidBecomeActive = function () {
+    if (typeof onApplicationDidBecomeActiveCallback === 'function') onApplicationDidBecomeActiveCallback();
+};
 
-exports._applicationDidEnterBackground = function () {};
+exports._applicationDidEnterBackground = function () {
+    if (typeof onApplicationDidEnterBackgroundCallback === 'function') onApplicationDidEnterBackgroundCallback();
+};
+
+var onInstallationIdChangeCallback;
+var onApplicationDidBecomeActiveCallback;
+var onApplicationDidEnterBackgroundCallback;
+
+exports.registerInstallationIdChangeListener = function (fn) {
+    if (typeof fn !== "function") throw "The specified argument must be a function";
+    onInstallationIdChangeCallback = fn;
+};
+
+exports.registerApplicationDidBecomeActiveListener = function (fn) {
+    if (typeof fn !== "function") throw "The specified argument must be a function";
+    onApplicationDidBecomeActiveCallback = fn;
+};
+
+exports.registerApplicationDidEnterBackgroundListener = function (fn) {
+    if (typeof fn !== "function") throw "The specified argument must be a function";
+    onApplicationDidEnterBackgroundCallback = fn;
+};
