@@ -1,3 +1,13 @@
+/**
+ * @file AppDelegate+FirebasexCore.m
+ * @brief AppDelegate category that initialises Firebase and broadcasts lifecycle events.
+ *
+ * Uses Objective-C method swizzling to intercept @c application:didFinishLaunchingWithOptions:
+ * so Firebase can be configured before any feature plugins initialise. Lifecycle events
+ * (foreground, background, URL open) are broadcast as @c NSNotification instances
+ * that other modular FirebaseX plugins observe.
+ */
+
 #import "AppDelegate+FirebasexCore.h"
 #import "FirebasexCorePlugin.h"
 #import "FirebasexCoreWrapper.h"
@@ -5,35 +15,71 @@
 
 @import UserNotifications;
 
+/** NSUserDefaults key for the associated @c applicationInBackground property. */
 #define kApplicationInBackgroundKey @"applicationInBackground"
 
+/** Notification name: app entered foreground. */
 NSString * const FirebasexAppDidBecomeActive = @"FirebasexAppDidBecomeActive";
+/** Notification name: app entered background. */
 NSString * const FirebasexAppDidEnterBackground = @"FirebasexAppDidEnterBackground";
+/** Notification name: Firebase configured, app finished launching. */
 NSString * const FirebasexAppDidFinishLaunching = @"FirebasexAppDidFinishLaunching";
+/** Notification name: app handled an incoming URL. */
 NSString * const FirebasexHandleOpenURL = @"FirebasexHandleOpenURL";
 
 @implementation AppDelegate (FirebasexCore)
 
+/** Singleton reference to the current AppDelegate instance. */
 static AppDelegate *instance;
 
+/** Returns the cached AppDelegate singleton. */
 + (AppDelegate *)instance {
     return instance;
 }
 
+/**
+ * Swizzles @c application:didFinishLaunchingWithOptions: with
+ * @c application:firebasexCoreDidFinishLaunchingWithOptions: at class load time.
+ *
+ * This ensures Firebase is initialised before Cordova plugins' @c pluginInitialize is called.
+ */
 + (void)load {
     Method original = class_getInstanceMethod(self, @selector(application:didFinishLaunchingWithOptions:));
     Method swizzled = class_getInstanceMethod(self, @selector(application:firebasexCoreDidFinishLaunchingWithOptions:));
     method_exchangeImplementations(original, swizzled);
 }
 
+/**
+ * Setter for the associated @c applicationInBackground property.
+ *
+ * Uses Objective-C associated objects because categories cannot add instance variables.
+ */
 - (void)setApplicationInBackground:(NSNumber *)applicationInBackground {
     objc_setAssociatedObject(self, kApplicationInBackgroundKey, applicationInBackground, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
+/**
+ * Getter for the associated @c applicationInBackground property.
+ */
 - (NSNumber *)applicationInBackground {
     return objc_getAssociatedObject(self, kApplicationInBackgroundKey);
 }
 
+/**
+ * Swizzled version of @c application:didFinishLaunchingWithOptions:.
+ *
+ * Performs the following in order:
+ * 1. Calls the original (swizzled) implementation.
+ * 2. In DEBUG builds, enables Firebase and Analytics debug mode.
+ * 3. Configures Firebase using GoogleService-Info.plist if available,
+ *    falling back to @c [FIRApp configure] otherwise.
+ * 4. Sets @c applicationInBackground to @c YES.
+ * 5. Posts @c FirebasexAppDidFinishLaunching so feature plugins can react.
+ *
+ * @param application    The UIApplication instance.
+ * @param launchOptions  The launch options dictionary.
+ * @return Always @c YES.
+ */
 - (BOOL)application:(UIApplication *)application firebasexCoreDidFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Call the original implementation (swizzled)
     [self application:application firebasexCoreDidFinishLaunchingWithOptions:launchOptions];
@@ -70,6 +116,12 @@ static AppDelegate *instance;
     return YES;
 }
 
+/**
+ * Called when the app enters the foreground.
+ *
+ * Updates @c applicationInBackground to @c NO, executes the JS lifecycle callback,
+ * and posts @c FirebasexAppDidBecomeActive.
+ */
 - (void)applicationDidBecomeActive:(UIApplication *)application {
     self.applicationInBackground = @(NO);
     @try {
@@ -81,6 +133,12 @@ static AppDelegate *instance;
     }
 }
 
+/**
+ * Called when the app enters the background.
+ *
+ * Updates @c applicationInBackground to @c YES, executes the JS lifecycle callback,
+ * and posts @c FirebasexAppDidEnterBackground.
+ */
 - (void)applicationDidEnterBackground:(UIApplication *)application {
     self.applicationInBackground = @(YES);
     @try {
@@ -92,6 +150,12 @@ static AppDelegate *instance;
     }
 }
 
+/**
+ * Called when the app handles an incoming URL.
+ *
+ * Posts @c FirebasexHandleOpenURL with the URL as the notification object,
+ * allowing feature plugins (e.g., auth) to process deep links.
+ */
 - (void)handleOpenURL:(NSNotification *)notification {
     NSURL *url = [notification object];
     [[NSNotificationCenter defaultCenter] postNotificationName:FirebasexHandleOpenURL object:url];

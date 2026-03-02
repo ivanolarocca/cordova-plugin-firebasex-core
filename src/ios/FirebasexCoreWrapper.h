@@ -1,3 +1,11 @@
+/**
+ * @file FirebasexCoreWrapper.h
+ * @brief Conditional import header for Firebase framework modules.
+ *
+ * Uses @c __has_include to conditionally import FirebaseInstallations if available.
+ * This avoids hard compile errors when optional Firebase pods are not installed.
+ */
+
 #import <FirebaseCore/FirebaseCore.h>
 
 #if !defined(__has_include)
