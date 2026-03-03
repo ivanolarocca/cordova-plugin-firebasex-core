@@ -21,6 +21,15 @@ var _configXml,
     /** @private Cached resolved plugin variables. */
     _pluginVariables;
 
+/**
+ * The plugin ID of the backward-compatible wrapper meta-plugin.
+ * Used as a fallback source for plugin variables in config.xml and package.json,
+ * so that variables specified when installing the wrapper are visible to this
+ * modular plugin's hook scripts.
+ * @constant {string}
+ */
+var WRAPPER_PLUGIN_ID = "cordova-plugin-firebasex";
+
 var Utilities = {};
 
 /**
@@ -178,24 +187,36 @@ Utilities.parsePluginVariables = function(){
     });
 
     // Parse config.xml
+    // Check both this plugin's ID and the wrapper meta-plugin ID so that variables
+    // specified when installing the wrapper are also picked up.
     var config = Utilities.parseConfigXml();
+    var ownPluginId = Utilities.getPluginId();
     (config.widget.plugin ? [].concat(config.widget.plugin) : []).forEach(function(plugin){
         (plugin.variable ? [].concat(plugin.variable) : []).forEach(function(variable){
-            if((plugin._attributes.name === Utilities.getPluginId() || plugin._attributes.id === Utilities.getPluginId()) && variable._attributes.name && variable._attributes.value){
+            var pluginName = plugin._attributes.name || plugin._attributes.id;
+            if((pluginName === ownPluginId || pluginName === WRAPPER_PLUGIN_ID) && variable._attributes.name && variable._attributes.value){
                 pluginVariables[variable._attributes.name] = variable._attributes.value;
             }
         });
     });
 
     // Parse package.json
+    // Check both this plugin's ID and the wrapper meta-plugin ID.
+    // Own plugin ID is checked last so its values take precedence over the wrapper's.
     var packageJSON = Utilities.parsePackageJson();
     if(packageJSON.cordova && packageJSON.cordova.plugins){
-        for(const pluginId in packageJSON.cordova.plugins){
-            if(pluginId === Utilities.getPluginId()){
-                for(const varName in packageJSON.cordova.plugins[pluginId]){
-                    var varValue = packageJSON.cordova.plugins[pluginId][varName];
-                    pluginVariables[varName] = varValue;
-                }
+        // First, apply wrapper variables as a base layer
+        if(packageJSON.cordova.plugins[WRAPPER_PLUGIN_ID]){
+            for(const varName in packageJSON.cordova.plugins[WRAPPER_PLUGIN_ID]){
+                var varValue = packageJSON.cordova.plugins[WRAPPER_PLUGIN_ID][varName];
+                pluginVariables[varName] = varValue;
+            }
+        }
+        // Then, apply this plugin's own variables (higher priority)
+        if(packageJSON.cordova.plugins[ownPluginId]){
+            for(const varName in packageJSON.cordova.plugins[ownPluginId]){
+                var varValue = packageJSON.cordova.plugins[ownPluginId][varName];
+                pluginVariables[varName] = varValue;
             }
         }
     }
