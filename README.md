@@ -1,9 +1,8 @@
-# cordova-plugin-firebasex-core [![Latest Stable Version](https://img.shields.io/npm/v/cordova-plugin-firebasex-core.svg)](https://www.npmjs.com/package/cordova-plugin-firebasex-core) [![Total Downloads](https://img.shields.io/npm/dt/cordova-plugin-firebasex-core.svg)](https://npm-stat.com/charts.html?package=cordova-plugin-firebasex-core)
+# cordova-plugin-firebasex-core [![Latest Stable Version](https://img.shields.io/npm/v/cordova-plugin-firebasex-core.svg)](https://www.npmjs.com/package/cordova-plugin-firebasex-core)
 
-Core plugin for the modular FirebaseX Cordova plugin suite. This plugin initializes Firebase and provides shared utilities used by all feature plugins.
+Core plugin for the [modular FirebaseX Cordova plugin suite](https://github.com/dpa99c/cordova-plugin-firebasex#modular-plugins). 
 
-This is part of the [modular FirebaseX Cordova plugin suite](https://github.com/dpa99c/cordova-plugin-firebasex#modular-plugins).
-Install only the modules you need for smaller app size and better build performance.
+This plugin wraps the [Firebase SDK](https://firebase.google.com/docs/reference) and provides core functionality such as Firebase initialization, the Installations API, and shared utilities used by all feature plugins.
 
 Supported platforms: Android and iOS
 
