@@ -67,9 +67,9 @@
                 <source url="https://cdn.cocoapods.org/"/>
             </config>
             <pods use-frameworks="true">
-                <pod name="FirebaseCore" spec="$IOS_FIREBASE_SDK_VERSION"/>
-                <pod name="FirebaseCoreExtension" spec="$IOS_FIREBASE_SDK_VERSION"/>
-                <pod name="FirebaseInstallations" spec="$IOS_FIREBASE_SDK_VERSION"/>
+                <pod name="FirebaseCore" spec="12.9.0"/>
+                <pod name="FirebaseCoreExtension" spec="12.9.0"/>
+                <pod name="FirebaseInstallations" spec="12.9.0"/>
             </pods>
         </podspec>
 
