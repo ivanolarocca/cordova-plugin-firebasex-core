@@ -33,6 +33,10 @@ var utilities = require("./lib/utilities");
 
 /** @type {string} The application name derived from config.xml. */
 var appName;
+
+/** @type {string} The path to the iOS app subdirectory, which may be `platforms/ios/App` for cordova-ios 8+ or `platforms/ios/{appName}` for older versions */
+var appSubDirPath;
+
 /** @type {Object} Resolved plugin variable key/value pairs. */
 var pluginVariables = {};
 
@@ -55,23 +59,26 @@ var PLATFORM;
  *
  * Must be called after {@link utilities.setContext} so that `getAppName()` and
  * `getPluginId()` can resolve their values.
+ * 
+ * @param {object} context - The Cordova hook context.
  */
-var setupEnv = function () {
+var setupEnv = function (context) {
     appName = utilities.getAppName();
+    appSubDirPath = utilities.getAppSubDirPath(path.join(context.opts.projectRoot, IOS_DIR));
     PLUGIN_ID = utilities.getPluginId();
     PLATFORM = {
         IOS: {
             platformDir: IOS_DIR,
-            dest: IOS_DIR + '/' + appName + '/Resources/GoogleService-Info.plist',
+            dest: path.join(appSubDirPath, 'Resources/GoogleService-Info.plist'),
             src: [
                 'GoogleService-Info.plist',
-                IOS_DIR + '/www/GoogleService-Info.plist',
+                path.join(IOS_DIR, 'www/GoogleService-Info.plist'),
                 'www/GoogleService-Info.plist'
             ],
-            appPlist: IOS_DIR + '/' + appName + '/' + appName + '-Info.plist',
-            entitlementsDebugPlist: IOS_DIR + '/' + appName + '/Entitlements-Debug.plist',
-            entitlementsReleasePlist: IOS_DIR + '/' + appName + '/Entitlements-Release.plist',
-            podFile: IOS_DIR + '/Podfile'
+            appPlist: path.join(appSubDirPath, appName + '-Info.plist'),
+            entitlementsDebugPlist: path.join(appSubDirPath, 'Entitlements-Debug.plist'),
+            entitlementsReleasePlist: path.join(appSubDirPath, 'Entitlements-Release.plist'),
+            podFile: path.join(IOS_DIR, 'Podfile')
         },
         ANDROID: {
             platformDir: ANDROID_DIR,
@@ -102,7 +109,7 @@ var setupEnv = function () {
 module.exports = function (context) {
     var platforms = context.opts.platforms;
     utilities.setContext(context);
-    setupEnv();
+    setupEnv(context);
 
     pluginVariables = utilities.parsePluginVariables();
 
@@ -142,10 +149,16 @@ module.exports = function (context) {
         // Copy colors.xml from the plugin source if it doesn't already exist in the platform.
         // This file provides the accent colour used in notification icons.
         if (!fs.existsSync(path.resolve(PLATFORM.ANDROID.colorsXml.target))) {
+            utilities.log('Existing colors.xml not found, copying from plugin source');
             var colorsXmlSrc = path.resolve(PLATFORM.ANDROID.colorsXml.src);
             if (fs.existsSync(colorsXmlSrc)) {
+                utilities.log('Copying colors.xml from ' + colorsXmlSrc + ' to ' + PLATFORM.ANDROID.colorsXml.target);
                 fs.copyFileSync(colorsXmlSrc, path.resolve(PLATFORM.ANDROID.colorsXml.target));
+            }else{
+                utilities.warn('colors.xml source file not found at ' + colorsXmlSrc + '. Accent colour will not be set.');
             }
+        }else{
+            utilities.log('Existing colors.xml found, no need to copy from plugin source');
         }
 
         // Parse colors.xml and update/add the 'accent' colour entry from plugin variables.
@@ -191,6 +204,8 @@ module.exports = function (context) {
                 utilities.writeJsonToXmlFile($colorsXml, PLATFORM.ANDROID.colorsXml.target);
                 utilities.log('Updated colors.xml with accent color');
             }
+        } else {
+            utilities.warn('colors.xml file not found at ' + PLATFORM.ANDROID.colorsXml.target + '. Cannot set accent colour.');
         }
 
         // Ensure the `tools` XML namespace is declared in AndroidManifest.xml.
@@ -212,7 +227,12 @@ module.exports = function (context) {
         // Validate GoogleService-Info.plist contains REVERSED_CLIENT_ID,
         // which is required for Google Sign-In on iOS.
         try {
-            var plistContent = fs.readFileSync(path.resolve(PLATFORM.IOS.dest)).toString();
+            var plistPath = path.resolve(PLATFORM.IOS.dest);
+            if(!fs.existsSync(plistPath)){
+                utilities.warn("GoogleService-Info.plist not found at " + plistPath + ". Aborting plist validation.");
+                return;
+            }
+            var plistContent = fs.readFileSync(plistPath).toString();
             if (plistContent.indexOf("REVERSED_CLIENT_ID") === -1) {
                 utilities.warn("GoogleService-Info.plist does not contain REVERSED_CLIENT_ID. Google Sign-In on iOS requires this.");
             }

@@ -59,6 +59,8 @@ function resolvePluginVariables(context) {
                     }
                 }
             });
+        } else {
+            console.warn("[FirebasexCore] config.xml not found at " + configXmlPath + ". Cannot read plugin variables from config.xml.");
         }
     } catch (e) {
         console.warn("[FirebasexCore] Could not read config.xml for plugin variables: " + e.message);
@@ -79,7 +81,9 @@ function resolvePluginVariables(context) {
                     }
                 });
             }
-        }
+        } else {
+            console.warn("[FirebasexCore] package.json not found at " + packageJsonPath + ". Cannot read plugin variables from package.json.");
+         }
     } catch (e) {
         console.warn("[FirebasexCore] Could not read package.json for plugin variables: " + e.message);
     }
@@ -103,7 +107,10 @@ function resolvePluginVariables(context) {
  * @param {string} newVersion - The new version string to set.
  */
 function updateFirebasePodVersions(podfilePath, podNames, newVersion) {
-    if (!fs.existsSync(podfilePath)) return;
+    if (!fs.existsSync(podfilePath)) {
+        console.warn("[FirebasexCore] Podfile not found at " + podfilePath + ". Cannot update Firebase pod versions.");
+        return;
+    }
     try {
         var podfileContents = fs.readFileSync(podfilePath, "utf-8");
         var versionRegex = /\d+\.\d+\.\d+[^'"]*/;

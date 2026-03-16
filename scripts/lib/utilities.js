@@ -21,6 +21,9 @@ var _configXml,
     /** @private Cached resolved plugin variables. */
     _pluginVariables;
 
+/** @constant {string} The expected app's Xcode name under `platforms/ios`. Since cordova-ios 8, this is `App`; in cordova <= 7 this was the project name. */
+var appNameCordova8Plus = "App"; 
+
 /**
  * The plugin ID of the backward-compatible wrapper meta-plugin.
  * Used as a fallback source for plugin variables in config.xml and package.json,
@@ -127,21 +130,63 @@ Utilities.writeJsonToXmlFile = function(jsonObj, filepath, parseOpts){
 };
 
 /**
- * Gets the application name.
+ * Supports both the legacy cordova-ios layout (where the Xcode project is under `platforms/ios/<AppName>.xcodeproj`)
+ * and the new cordova-ios 8+ layout (where the Xcode project is under `platforms/ios/App/App.xcodeproj`)
+ * by checking for the existence of the new layout first, then falling back to the old layout if not found.
+ */
+Utilities.getAppSubDirPath = function(iosPlatformPath) {
+    var newPath = path.join(iosPlatformPath, appNameCordova8Plus);
+    if (fs.existsSync(newPath)) {
+        // Cordova-ios 8+ layout detected - use the `App` subdirectory as the base path for Info.plist and entitlements files
+        return newPath;
+    }
+    // Legacy cordova-ios layout - use the name from config.xml as the app subdirectory (which is also the name of the Xcode project)
+    var legacyAppName = Utilities.parseConfigXml().widget.name._text.toString().trim();
+    return path.join(iosPlatformPath, legacyAppName);
+};
+
+/**
+ * Determines whether the project is using cordova-ios 8+ by checking for the existence of the `platforms/ios/App` directory.
+ *
+ * @param {string} iosPlatformPath - Absolute path to the `platforms/ios` directory.
+ * @returns {boolean} True if cordova-ios 8+ layout is detected, false otherwise.
+ */
+Utilities.isCordovaIOS8Plus = function(iosPlatformPath) {
+    var appSubDirPath = path.join(iosPlatformPath, appNameCordova8Plus);
+    return fs.existsSync(appSubDirPath) && fs.statSync(appSubDirPath).isDirectory();
+};
+
+/**
+ * Gets the application name used for the iOS platform, supporting both cordova-ios 8+ and legacy layouts.
+ * For cordova-ios 8+, this is the name of the subdirectory under `platforms/ios` (usually "App").
+ * For legacy cordova-ios versions, this is the project name specified in config.xml.
  * On iOS, uses the cordova-ios API to resolve the Xcode project directory name.
  * On other platforms, falls back to parsing the `<name>` element from config.xml.
  *
  * @returns {string} The application name.
  */
 Utilities.getAppName = function(){
-    if(_context && _context.opts.cordova.platforms.indexOf('ios') !== -1){
-        const projectRoot = _context.opts.projectRoot;
-        const platformPath = path.join(projectRoot, 'platforms', 'ios');
-        const cordova_ios = require('cordova-ios');
-        const iosProject = new cordova_ios('ios', platformPath);
-        return path.basename(iosProject.locations.xcodeCordovaProj);
+    if(!_context){
+        console.warn("Cordova context not set; falling back to config.xml parsing for app name");
+        return Utilities.parseConfigXml().widget.name._text.toString().trim();
     }
-    return Utilities.parseConfigXml().widget.name._text.toString().trim();
+    if(_context.opts.cordova.platforms.indexOf('ios') === -1){
+        console.debug("Non-iOS platform detected; using config.xml parsing for app name");
+        return Utilities.parseConfigXml().widget.name._text.toString().trim();
+    }
+
+    const projectRoot = _context.opts.projectRoot;
+    const platformPath = path.join(projectRoot, 'platforms', 'ios');
+
+    // Cordova-ios 8+: skip loading cordova-ios entirely by using the directory check
+    if(Utilities.isCordovaIOS8Plus(platformPath)){
+        return appNameCordova8Plus;
+    }
+
+    // Legacy cordova-ios: use cordova-ios API to resolve the Xcode project directory name
+    const cordova_ios = require('cordova-ios');
+    const iosProject = new cordova_ios('ios', platformPath);
+    return path.basename(iosProject.locations.xcodeCordovaProj);
 };
 
 /**
