@@ -86,9 +86,6 @@ The following plugin variables are used to specify the Firebase SDK versions as 
 
 See [Specifying Android library versions](#specifying-android-library-versions) for more info.
 
--   `ANDROID_ICON_ACCENT` - sets the default accent color for system notifications. See the [messaging plugin](https://github.com/dpa99c/cordova-plugin-firebasex-messaging/) for more info on notification icon colors.
-    -   e.g. `--variable ANDROID_ICON_ACCENT=#FF123456`
-
 ### iOS only
 
 -   `IOS_FIREBASE_SDK_VERSION` - a specific version of the Firebase iOS SDK to set in the Podfile.

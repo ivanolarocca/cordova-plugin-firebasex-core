@@ -9,7 +9,6 @@
  * **Android:**
  * - Copies `google-services.json` to the correct platform location.
  * - Validates the file contains a Web Client ID (client_type: 3) required by Credential Manager.
- * - Copies/creates `colors.xml` with the notification accent colour from plugin variables.
  * - Adds the `tools` XML namespace to `AndroidManifest.xml` if missing.
  *
  * **iOS:**
@@ -89,10 +88,6 @@ var setupEnv = function (context) {
                 'www/google-services.json',
                 ANDROID_DIR + '/app/src/main/google-services.json'
             ],
-            colorsXml: {
-                src: './plugins/' + PLUGIN_ID + '/src/android/colors.xml',
-                target: ANDROID_DIR + '/app/src/main/res/values/colors.xml'
-            },
             manifestXml: ANDROID_DIR + '/app/src/main/AndroidManifest.xml',
         }
     };
@@ -144,68 +139,6 @@ module.exports = function (context) {
             }
         } catch (e) {
             utilities.warn("Failed to validate google-services.json: " + e.message);
-        }
-
-        // Copy colors.xml from the plugin source if it doesn't already exist in the platform.
-        // This file provides the accent colour used in notification icons.
-        if (!fs.existsSync(path.resolve(PLATFORM.ANDROID.colorsXml.target))) {
-            utilities.log('Existing colors.xml not found, copying from plugin source');
-            var colorsXmlSrc = path.resolve(PLATFORM.ANDROID.colorsXml.src);
-            if (fs.existsSync(colorsXmlSrc)) {
-                utilities.log('Copying colors.xml from ' + colorsXmlSrc + ' to ' + PLATFORM.ANDROID.colorsXml.target);
-                fs.copyFileSync(colorsXmlSrc, path.resolve(PLATFORM.ANDROID.colorsXml.target));
-            }else{
-                utilities.warn('colors.xml source file not found at ' + colorsXmlSrc + '. Accent colour will not be set.');
-            }
-        }else{
-            utilities.log('Existing colors.xml found, no need to copy from plugin source');
-        }
-
-        // Parse colors.xml and update/add the 'accent' colour entry from plugin variables.
-        if (fs.existsSync(path.resolve(PLATFORM.ANDROID.colorsXml.target))) {
-            const $colorsXml = utilities.parseXmlFileToJson(PLATFORM.ANDROID.colorsXml.target, { compact: true });
-            var accentColor = pluginVariables.ANDROID_ICON_ACCENT,
-                $resources = $colorsXml.resources,
-                existingAccent = false,
-                writeChanges = false;
-
-            if ($resources.color) {
-                var $colors = $resources.color.length ? $resources.color : [$resources.color];
-                $colors.forEach(function ($color) {
-                    if ($color._attributes.name === 'accent') {
-                        existingAccent = true;
-                        if ($color._text !== accentColor) {
-                            $color._text = accentColor;
-                            writeChanges = true;
-                        }
-                    }
-                });
-            } else {
-                $resources.color = {};
-            }
-
-            if (!existingAccent) {
-                var $accentColor = {
-                    _attributes: { name: 'accent' },
-                    _text: accentColor
-                };
-                if ($resources.color && Object.keys($resources.color).length) {
-                    if (typeof $resources.color.length === 'undefined') {
-                        $resources.color = [$resources.color];
-                    }
-                    $resources.color.push($accentColor);
-                } else {
-                    $resources.color = $accentColor;
-                }
-                writeChanges = true;
-            }
-
-            if (writeChanges) {
-                utilities.writeJsonToXmlFile($colorsXml, PLATFORM.ANDROID.colorsXml.target);
-                utilities.log('Updated colors.xml with accent color');
-            }
-        } else {
-            utilities.warn('colors.xml file not found at ' + PLATFORM.ANDROID.colorsXml.target + '. Cannot set accent colour.');
         }
 
         // Ensure the `tools` XML namespace is declared in AndroidManifest.xml.
