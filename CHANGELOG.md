@@ -1,5 +1,13 @@
+# Version 1.0.3
+- fix: correct GradlePluginGoogleServicesEnabled target and remove dead code.
+- (android) Remove accent color as it's specific to notifications so belongs in `cordova-plugin-firebasex-messaging`.
+
+# Version 1.0.2
+- (ios) Fix hook script compatibility with cordova-ios@8
+
 # Version 1.0.1
 - Fix plugin metadata
+
 
 # Version 1.0.0
 - Initial release of the modular plugin.
