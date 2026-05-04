@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <plugin id="cordova-plugin-firebasex-core"
-        version="1.0.3"
+        version="1.0.3-sdk11"
         xmlns="http://apache.org/cordova/ns/plugins/1.0"
         xmlns:android="http://schemas.android.com/apk/res/android">
 
@@ -53,7 +53,7 @@
 
     <!-- iOS -->
     <platform name="ios">
-        <preference name="IOS_FIREBASE_SDK_VERSION" default="12.9.0"/>
+        <preference name="IOS_FIREBASE_SDK_VERSION" default="11.15.0"/>
 
         <config-file parent="/*" target="config.xml">
             <feature name="FirebasexCorePlugin">
@@ -69,9 +69,9 @@
                 <source url="https://cdn.cocoapods.org/"/>
             </config>
             <pods use-frameworks="true">
-                <pod name="FirebaseCore" spec="12.9.0"/>
-                <pod name="FirebaseCoreExtension" spec="12.9.0"/>
-                <pod name="FirebaseInstallations" spec="12.9.0"/>
+                <pod name="FirebaseCore" spec="11.15.0"/>
+                <pod name="FirebaseCoreExtension" spec="11.15.0"/>
+                <pod name="FirebaseInstallations" spec="11.15.0"/>
             </pods>
         </podspec>
 
